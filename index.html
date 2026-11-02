@@ -1,1 +1,95 @@
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'Empire - Gang</title>
+    <style>
+        body { background-color: #111; color: #fff; font-family: 'Courier New', monospace; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #f00; text-transform: uppercase; letter-spacing: 3px; }
+        .gang-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        .member-card { background-color: #222; border: 2px solid #444; border-radius: 10px; width: 300px; padding: 15px; text-align: center; box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2); }
+        .member-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 5px; border: 1px solid #555; }
+        .member-name { font-size: 24px; color: #ffcc00; margin: 10px 0; }
+        .member-quote { font-style: italic; color: #aaa; margin-bottom: 10px; }
+        .member-bounty { font-size: 20px; color: #ff0000; font-weight: bold; }
+        .member-code { background-color: #000; padding: 8px; margin-top: 10px; border: 1px dashed #888; color: #00ff00; font-weight: bold; }
+        #admin-btn { position: fixed; top: 10px; right: 10px; background: #f00; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; z-index: 1000; }
+        #admin-btn:hover { background: #900; }
+    </style>
+</head>
+<body>
+    <button id="admin-btn" onclick="loginAdmin()">Mode Admin</button>
+    <h1>L'Empire de la Nuit</h1>
+    <div class="gang-container" id="gang-list"><p style="text-align:center; width:100%;">Chargement des données...</p></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUa1QBClNFmAU4YIsmp7C0mTHxMZV6ceQ",
+            authDomain: "empire---black-zetsu.firebaseapp.com",
+            projectId: "empire---black-zetsu",
+            storageBucket: "empire---black-zetsu.firebasestorage.app",
+            messagingSenderId: "1024844241052",
+            appId: "1:1024844241052:web:76f44f2fc5b335e6a1b559"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let isAdmin = false;
+
+        async function afficherMembres() {
+            const container = document.getElementById('gang-list');
+            container.innerHTML = '';
+            try {
+                const querySnapshot = await getDocs(collection(db, "membres"));
+                if (querySnapshot.empty) {
+                    container.innerHTML = "<p style='text-align:center; width:100%;'>Aucun membre dans la base de données.</p>";
+                    return;
+                }
+                querySnapshot.forEach((doc) => {
+                    const membre = doc.data();
+                    const codeAffiche = isAdmin ? membre.code : "*** ACCÈS REFUSÉ ***";
+                    const card = document.createElement('div');
+                    card.className = 'member-card';
+                    card.innerHTML = `
+                        <img src="${membre.image}" alt="${membre.nom}">
+                        <h2 class="member-name">${membre.nom}</h2>
+                        <p class="member-quote">"${membre.citation}"</p>
+                        <p class="member-bounty">💰 Prime : ${membre.prime} $</p>
+                        <div class="member-code">CODE : ${codeAffiche}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Erreur : ", error);
+                container.innerHTML = "<p style='color:red; text-align:center; width:100%;'>Erreur de connexion à la base de données.</p>";
+            }
+        }
+
+        window.loginAdmin = function() {
+            if (isAdmin) {
+                isAdmin = false;
+                document.getElementById('admin-btn').innerText = "Mode Admin";
+                document.getElementById('admin-btn').style.background = "#f00";
+                afficherMembres();
+            } else {
+                const password = prompt("Entrez le mot de passe Admin :");
+                if (password === "boss123") { 
+                    isAdmin = true;
+                    document.getElementById('admin-btn').innerText = "Déconnexion Admin";
+                    document.getElementById('admin-btn').style.background = "#00ff00";
+                    document.getElementById('admin-btn').style.color = "#000";
+                    afficherMembres();
+                } else {
+                    alert("Accès refusé.");
+                }
+            }
+        }
+        afficherMembres();
+    </script>
+</body>
+</html>
